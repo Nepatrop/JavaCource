@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Список сотрудников</title>
+</head>
+<body>
+<h1>Список сотрудников</h1>
+
+<div>
+    <a href="/employees/list">Все сотрудники</a> |
+    <a href="/swagger-ui/index.html">Swagger</a> |
+    <a href="/actuator">Actuator</a>
+</div>
+
+<table border="1" style="border-collapse: collapse; margin-top: 20px;">
+    <tr>
+        <th>ID</th>
+        <th>Имя</th>
+        <th>Фамилия</th>
+        <th>Отдел</th>
+        <th>Должность</th>
+    </tr>
+    <tr th:each="employee : ${employees}">
+        <td th:text="${employee.id}">1</td>
+        <td th:text="${employee.firstName}">Иван</td>
+        <td th:text="${employee.lastName}">Петров</td>
+        <td th:text="${employee.department}">IT</td>
+        <td th:text="${employee.position}">Разработчик</td>
+    </tr>
+</table>
+
+<div th:if="${#lists.isEmpty(employees)}" style="margin-top: 20px;">
+    Нет сотрудников для отображения
+</div>
+</body>
+</html>
