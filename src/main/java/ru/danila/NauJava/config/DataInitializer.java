@@ -2,9 +2,12 @@ package ru.danila.NauJava.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import ru.danila.NauJava.dao.EmployeeRepository;
+import ru.danila.NauJava.dao.UserRepository;
 import ru.danila.NauJava.entity.Employee;
+import ru.danila.NauJava.entity.User;
 
 /**
  *  Инициализация тестовых данных при запуске приложения
@@ -13,16 +16,23 @@ import ru.danila.NauJava.entity.Employee;
 public class DataInitializer implements CommandLineRunner {
 
     private final EmployeeRepository m_employeeRepository;
+    private final UserRepository m_userRepository;
+    private final PasswordEncoder m_passwordEncoder;
 
     @Autowired
-    public DataInitializer(EmployeeRepository t_employeeRepository) {
+    public DataInitializer(EmployeeRepository t_employeeRepository,
+                           UserRepository t_userRepository,
+                           PasswordEncoder t_passwordEncoder) {
         this.m_employeeRepository = t_employeeRepository;
+        this.m_userRepository = t_userRepository;
+        this.m_passwordEncoder = t_passwordEncoder;
     }
 
     @Override
     public void run(String... t_args) throws Exception {
         // Добавляем тестовых сотрудников через репозиторий
         addTestEmployees();
+        addTestUsers();
     }
 
     private void addTestEmployees() {
@@ -75,5 +85,31 @@ public class DataInitializer implements CommandLineRunner {
         emp5.setDepartment("Маркетинг");
         emp5.setPosition("Аналитик");
         m_employeeRepository.create(emp5);
+    }
+
+    private void addTestUsers() {
+        if (!m_userRepository.findAll().isEmpty()) {
+            return;
+        }
+
+        // Администратор
+        User admin = new User();
+        admin.setId(1L);
+        admin.setUsername("admin");
+        admin.setPassword(m_passwordEncoder.encode("admin"));
+        admin.addRole("ADMIN");
+        m_userRepository.create(admin);
+
+        // Обычный пользователь
+        User user = new User();
+        user.setId(2L);
+        user.setUsername("user");
+        user.setPassword(m_passwordEncoder.encode("user"));
+        user.addRole("USER");
+        m_userRepository.create(user);
+
+        System.out.println("Созданы тестовые пользователи:");
+        System.out.println("   - admin/admin (ADMIN)");
+        System.out.println("   - user/user (USER)");
     }
 }
