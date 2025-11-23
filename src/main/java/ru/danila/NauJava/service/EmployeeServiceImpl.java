@@ -67,8 +67,10 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public void deleteEmployee(Long t_id) {
-        // Удаляем сотрудника
-        m_employeeRepository.delete(t_id);
+        Employee employee = m_employeeRepository.read(t_id);
+        if (employee != null) {
+            m_employeeRepository.delete(t_id);
+        }
     }
 
     @Override

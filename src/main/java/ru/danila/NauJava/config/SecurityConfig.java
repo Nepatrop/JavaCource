@@ -2,6 +2,7 @@ package ru.danila.NauJava.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -17,6 +18,7 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     @Bean
+    @Profile("!test") // Основная конфигурация - не для тестов
     public SecurityFilterChain securityFilterChain(HttpSecurity t_http) throws Exception {
         t_http
                 .authorizeHttpRequests(authz -> authz
@@ -46,6 +48,28 @@ public class SecurityConfig {
                 )
                 // Отключаем CSRF для упрощения тестирования REST API
                 .csrf(AbstractHttpConfigurer::disable);
+
+        return t_http.build();
+    }
+
+    @Bean
+    @Profile("test") // Тестовая конфигурация безопасности
+    public SecurityFilterChain testSecurityFilterChain(HttpSecurity t_http) throws Exception {
+        t_http
+                .authorizeHttpRequests(authz -> authz
+                        .requestMatchers("/**").permitAll() // Разрешаем ВСЕ запросы
+                )
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .defaultSuccessUrl("/employees/list")
+                        .permitAll()
+                )
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/login?logout")
+                        .permitAll()
+                )
+                .csrf(AbstractHttpConfigurer::disable); // Важно: отключаем CSRF
 
         return t_http.build();
     }

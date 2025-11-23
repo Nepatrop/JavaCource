@@ -21,27 +21,7 @@ public class ConsoleConfig {
 
     @Bean
     public CommandLineRunner commandLineRunner() {
-        // Возвращаем лямбду, которая будет выполнена после запуска приложения
         return args -> {
-            // Используем try-with-resources для автоматического закрытия Scanner
-            try (Scanner scanner = new Scanner(System.in)) {
-                System.out.println("Система учета сотрудников запущена. Введите 'help' для списка команд.");
-
-                // Бесконечный цикл для чтения команд
-                while (true) {
-                    System.out.print("> ");
-                    String input = scanner.nextLine();
-
-                    // Выход из приложения
-                    if ("exit".equalsIgnoreCase(input.trim())) {
-                        System.out.println("Выход из программы...");
-                        break;
-                    }
-
-                    // Передаем команду на обработку
-                    m_commandProcessor.processCommand(input);
-                }
-            }
         };
     }
 }
