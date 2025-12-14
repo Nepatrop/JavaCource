@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Отделы - NauJava HR System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4a6cf7;
+            --secondary-color: #6c757d;
+            --bg-color: #f8f9fc;
+            --card-bg: #ffffff;
+            --text-color: #333;
+            --text-muted: #6c757d;
+        }
+        body {
+            background-color: var(--bg-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text-color);
+        }
+        .navbar {
+            background: var(--card-bg);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+            padding: 12px 0;
+        }
+        .navbar-brand {
+            font-weight: 600;
+            font-size: 1.25rem;
+            color: var(--primary-color) !important;
+        }
+        .nav-link {
+            color: var(--text-color) !important;
+            font-weight: 500;
+            margin: 0 8px;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: var(--primary-color) !important;
+        }
+        .page-header {
+            background: var(--card-bg);
+            padding: 24px 0;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+        }
+        .dept-card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            height: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .dept-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .dept-icon {
+            width: 48px;
+            height: 48px;
+            background: #e3f2fd;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 16px;
+        }
+        .dept-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 8px;
+        }
+        .dept-description {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+        .dept-stats {
+            display: flex;
+            gap: 24px;
+            padding-top: 16px;
+            border-top: 1px solid #eee;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+<!-- Навигация -->
+<nav class="navbar">
+    <div class="container">
+        <a class="navbar-brand" href="/">NauJava HR System</a>
+        <ul class="navbar-nav ms-auto" style="display: flex; flex-direction: row; gap: 15px;">
+            <li class="nav-item"><a class="nav-link" href="/employees">Сотрудники</a></li>
+            <li class="nav-item"><a class="nav-link active" href="/departments">Отделы</a></li>
+            <li class="nav-item"><a class="nav-link" href="/reports">Отчёты</a></li>
+            <li class="nav-item"><a class="nav-link" href="/profile">Профиль</a></li>
+            <li class="nav-item"><a class="nav-link" href="/logout">Выход</a></li>
+        </ul>
+    </div>
+</nav>
+
+<!-- Заголовок страницы -->
+<div class="page-header">
+    <div class="container d-flex justify-content-between align-items-center">
+        <h1 class="page-title">Отделы</h1>
+        <div class="d-flex gap-2">
+            <button class="btn btn-primary btn-sm" id="addDeptBtn" style="display: none;" onclick="openAddModal()">
+                Добавить отдел
+            </button>
+            <button class="btn btn-outline-secondary btn-sm" onclick="loadDepartments()">
+                Обновить
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Основной контент -->
+<div class="container">
+    <div class="row g-4" id="departmentsContainer">
+        <div class="col-12 text-center py-5">
+            <div class="loading-spinner"></div>
+            <span class="ms-2 text-muted">Загрузка...</span>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно добавления отдела -->
+<div class="modal fade" id="addDeptModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background: #4a6cf7; color: white;">
+                <h5 class="modal-title">Добавить отдел</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter: invert(1);"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Название отдела</label>
+                    <input type="text" class="form-control" id="newDeptName" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Описание</label>
+                    <textarea class="form-control" id="newDeptDescription" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" onclick="createDepartment()">Создать</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const deptIcons = ['', '', '', '', '', '', '', ''];
+    let isAdmin = false;
+    let addModal = null;
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        addModal = new bootstrap.Modal(document.getElementById('addDeptModal'));
+        checkAdminRole();
+        loadDepartments();
+    });
+
+    function checkAdminRole() {
+        fetch('/profile/api/current')
+            .then(response => response.json())
+            .then(data => {
+                isAdmin = data.isAdmin;
+                if (isAdmin) {
+                    document.getElementById('addDeptBtn').style.display = 'inline-block';
+                }
+            })
+            .catch(error => console.error('Ошибка:', error));
+    }
+    
+    function loadDepartments() {
+        const container = document.getElementById('departmentsContainer');
+        container.innerHTML = '<div class="col-12 text-center py-5"><div class="loading-spinner"></div><span class="ms-2 text-muted">Загрузка...</span></div>';
+        
+        fetch('/api/departments')
+            .then(response => response.json())
+            .then(data => {
+                container.innerHTML = '';
+                
+                if (data.length === 0) {
+                    container.innerHTML = '<div class="col-12 empty-state">Нет данных об отделах</div>';
+                    return;
+                }
+                
+                data.forEach((dept, index) => {
+                    const icon = deptIcons[index % deptIcons.length];
+                    const card = `
+                        <div class="col-4">
+                            <div class="dept-card">
+                                <div class="dept-icon">${icon}</div>
+                                <div class="dept-name">${dept.name || 'Без названия'}</div>
+                                <div class="dept-description">${dept.description || 'Описание не указано'}</div>
+                                <div class="dept-stats">
+                                    <div class="stat-item">
+                                        <div class="stat-value">${dept.employeeCount || 0}</div>
+                                        <div class="stat-label">Сотрудников</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-value">${dept.headName || '—'}</div>
+                                        <div class="stat-label">Руководитель</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    container.innerHTML += card;
+                });
+            })
+            .catch(error => {
+                console.error('Ошибка:', error);
+                container.innerHTML = '<div class="col-12 text-center text-danger py-5">Ошибка загрузки данных</div>';
+            });
+    }
+
+    function openAddModal() {
+        document.getElementById('newDeptName').value = '';
+        document.getElementById('newDeptDescription').value = '';
+        addModal.show();
+    }
+
+    function createDepartment() {
+        const name = document.getElementById('newDeptName').value.trim();
+        const description = document.getElementById('newDeptDescription').value.trim();
+        
+        if (!name) {
+            alert('Введите название отдела');
+            return;
+        }
+        
+        fetch('/api/departments', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ m_name: name, m_description: description })
+        })
+        .then(response => {
+            if (response.ok) {
+                addModal.hide();
+                loadDepartments();
+            } else {
+                return response.json().then(err => { throw new Error(err.message || 'Ошибка'); });
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка:', error);
+            alert('Ошибка при создании: ' + error.message);
+        });
+    }
+</script>
+</body>
+</html>

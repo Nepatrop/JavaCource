@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Профиль - NauJava HR System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4a6cf7;
+            --bg-color: #f8f9fc;
+            --card-bg: #ffffff;
+            --text-color: #333;
+            --text-muted: #6c757d;
+        }
+        body {
+            background-color: var(--bg-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text-color);
+        }
+        .navbar {
+            background: var(--card-bg);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+            padding: 12px 0;
+        }
+        .navbar-brand {
+            font-weight: 600;
+            font-size: 1.25rem;
+            color: var(--primary-color) !important;
+        }
+        .nav-link {
+            color: var(--text-color) !important;
+            font-weight: 500;
+            margin: 0 8px;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: var(--primary-color) !important;
+        }
+        .page-header {
+            background: var(--card-bg);
+            padding: 24px 0;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+        }
+        .profile-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 32px;
+        }
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary-color), #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+            margin-bottom: 16px;
+        }
+        .profile-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .profile-email {
+            color: var(--text-muted);
+            margin-bottom: 24px;
+        }
+        .form-label {
+            font-weight: 500;
+            color: var(--text-color);
+            margin-bottom: 8px;
+        }
+        .form-control {
+            border: 1px solid #dee2e6;
+            padding: 12px 16px;
+            border-radius: 8px;
+        }
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(74, 108, 247, 0.1);
+        }
+        .form-control:disabled {
+            background-color: #f8f9fc;
+        }
+        .btn-primary {
+            background: var(--primary-color);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        .btn-primary:hover {
+            background: #3a5bd9;
+        }
+        .role-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .role-admin {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .role-user {
+            background: #d4edda;
+            color: #155724;
+        }
+        .alert {
+            border-radius: 8px;
+            border: none;
+        }
+        .info-box {
+            background: #f8f9fc;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .info-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        .info-value {
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+<!-- Навигация -->
+<nav class="navbar">
+    <div class="container">
+        <a class="navbar-brand" href="/">NauJava HR System</a>
+        <ul class="navbar-nav ms-auto" style="display: flex; flex-direction: row; gap: 15px;">
+            <li class="nav-item"><a class="nav-link" href="/employees">Сотрудники</a></li>
+            <li class="nav-item"><a class="nav-link" href="/departments">Отделы</a></li>
+            <li class="nav-item"><a class="nav-link" href="/reports">Отчёты</a></li>
+            <li class="nav-item"><a class="nav-link active" href="/profile">Профиль</a></li>
+            <li class="nav-item"><a class="nav-link" href="/logout">Выход</a></li>
+        </ul>
+    </div>
+</nav>
+
+<!-- Заголовок страницы -->
+<div class="page-header">
+    <div class="container">
+        <h1 class="page-title">Мой профиль</h1>
+    </div>
+</div>
+
+<!-- Основной контент -->
+<div class="container">
+    <div class="row">
+        <div class="col-4 mb-4">
+            <div class="profile-card text-center">
+                <div class="profile-avatar mx-auto" id="avatarInitials"></div>
+                <div class="profile-name" id="displayName">Загрузка...</div>
+                <div class="profile-email" id="displayEmail">—</div>
+                <div id="roleBadge"></div>
+            </div>
+        </div>
+        
+        <div class="col-8">
+            <div class="profile-card">
+                <h5 class="mb-4">Информация о профиле</h5>
+                
+                <div id="alertContainer"></div>
+                
+                <form id="profileForm">
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Имя пользователя</label>
+                            <input type="text" class="form-control" id="username" disabled>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" disabled>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    <h6 class="mb-3">Данные сотрудника</h6>
+                    
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Имя</label>
+                            <input type="text" class="form-control" id="firstName" disabled>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Фамилия</label>
+                            <input type="text" class="form-control" id="lastName" disabled>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Должность</label>
+                            <input type="text" class="form-control" id="position" disabled>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Отдел</label>
+                            <select class="form-select" id="department" disabled>
+                                <option value="">-- Выберите отдел --</option>
+                            </select>
+                            <input type="hidden" id="departmentId">
+                        </div>
+                    </div>
+                    
+                    <div id="adminButtons" style="display: none;" class="mt-4">
+                        <button type="button" class="btn btn-primary" onclick="enableEditing()">
+                            Редактировать
+                        </button>
+                        <button type="button" class="btn btn-success" id="saveBtn" style="display: none;" onclick="saveProfile()">
+                            Сохранить
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" id="cancelBtn" style="display: none;" onclick="cancelEditing()">
+                            Отмена
+                        </button>
+                    </div>
+                    
+                    <div id="userMessage" class="mt-4 text-muted" style="display: none;">
+                        <small>ℹ️ Для изменения данных профиля обратитесь к администратору</small>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    let currentUser = null;
+    let isAdmin = false;
+    let originalData = {};
+    let allDepartments = [];
+
+    document.addEventListener('DOMContentLoaded', function() {
+        loadDepartments();
+        loadProfile();
+    });
+
+    function loadDepartments() {
+        fetch('/api/departments')
+            .then(response => response.json())
+            .then(data => {
+                allDepartments = data;
+                const select = document.getElementById('department');
+                select.innerHTML = '<option value="">-- Выберите отдел --</option>';
+                data.forEach(dept => {
+                    select.innerHTML += `<option value="${dept.id}">${dept.name}</option>`;
+                });
+            })
+            .catch(error => console.error('Ошибка загрузки отделов:', error));
+    }
+
+    function loadProfile() {
+        fetch('/profile/api/current')
+            .then(response => response.json())
+            .then(data => {
+                currentUser = data;
+                isAdmin = data.isAdmin;
+                
+                // Заполняем данные
+                document.getElementById('username').value = data.username || '';
+                document.getElementById('email').value = data.email || '';
+                document.getElementById('firstName').value = data.firstName || '';
+                document.getElementById('lastName').value = data.lastName || '';
+                document.getElementById('position').value = data.position || '';
+                document.getElementById('department').value = data.departmentId || '';
+                document.getElementById('departmentId').value = data.departmentId || '';
+                
+                // Отображаемое имя
+                const displayName = data.firstName && data.lastName 
+                    ? `${data.firstName} ${data.lastName}` 
+                    : data.username;
+                document.getElementById('displayName').textContent = displayName;
+                document.getElementById('displayEmail').textContent = data.email;
+                
+                // Инициалы для аватара
+                const initials = (data.firstName && data.lastName)
+                    ? data.firstName.charAt(0) + data.lastName.charAt(0)
+                    : data.username.substring(0, 2).toUpperCase();
+                document.getElementById('avatarInitials').textContent = initials;
+                
+                // Роль
+                const roleBadge = document.getElementById('roleBadge');
+                if (isAdmin) {
+                    roleBadge.innerHTML = '<span class="role-badge role-admin">Администратор</span>';
+                } else {
+                    roleBadge.innerHTML = '<span class="role-badge role-user">Пользователь</span>';
+                }
+                
+                // Показываем кнопки для админа
+                if (isAdmin) {
+                    document.getElementById('adminButtons').style.display = 'block';
+                } else {
+                    document.getElementById('userMessage').style.display = 'block';
+                }
+                
+                // Сохраняем оригинальные данные
+                originalData = {...data};
+            })
+            .catch(error => {
+                console.error('Ошибка:', error);
+                showAlert('Ошибка загрузки профиля', 'danger');
+            });
+    }
+
+    function enableEditing() {
+        if (!isAdmin) return;
+        
+        document.getElementById('username').disabled = false;
+        document.getElementById('email').disabled = false;
+        document.getElementById('firstName').disabled = false;
+        document.getElementById('lastName').disabled = false;
+        document.getElementById('position').disabled = false;
+        document.getElementById('department').disabled = false;
+        
+        document.querySelector('#adminButtons button:first-child').style.display = 'none';
+        document.getElementById('saveBtn').style.display = 'inline-block';
+        document.getElementById('cancelBtn').style.display = 'inline-block';
+    }
+
+    function cancelEditing() {
+        // Восстанавливаем оригинальные данные
+        document.getElementById('username').value = originalData.username || '';
+        document.getElementById('email').value = originalData.email || '';
+        document.getElementById('firstName').value = originalData.firstName || '';
+        document.getElementById('lastName').value = originalData.lastName || '';
+        document.getElementById('position').value = originalData.position || '';
+        document.getElementById('department').value = originalData.departmentId || '';
+        
+        // Блокируем поля
+        document.getElementById('username').disabled = true;
+        document.getElementById('email').disabled = true;
+        document.getElementById('firstName').disabled = true;
+        document.getElementById('lastName').disabled = true;
+        document.getElementById('position').disabled = true;
+        document.getElementById('department').disabled = true;
+        
+        document.querySelector('#adminButtons button:first-child').style.display = 'inline-block';
+        document.getElementById('saveBtn').style.display = 'none';
+        document.getElementById('cancelBtn').style.display = 'none';
+    }
+
+    function saveProfile() {
+        const userData = {
+            userId: currentUser.id,
+            username: document.getElementById('username').value,
+            email: document.getElementById('email').value
+        };
+        
+        // Сохраняем данные пользователя
+        fetch('/profile/api/update', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(userData)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.error) {
+                showAlert(result.error, 'danger');
+                return Promise.reject(result.error);
+            }
+            
+            // Если есть связанный сотрудник, обновляем его данные
+            if (currentUser.employeeId) {
+                const empData = {
+                    m_firstName: document.getElementById('firstName').value,
+                    m_lastName: document.getElementById('lastName').value,
+                    m_email: document.getElementById('email').value,
+                    m_position: document.getElementById('position').value,
+                    m_departmentId: document.getElementById('department').value || null
+                };
+                
+                return fetch('/api/employees/' + currentUser.employeeId, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(empData)
+                });
+            }
+            return { ok: true };
+        })
+        .then(response => {
+            if (response && response.ok !== undefined && !response.ok) {
+                return response.json().then(err => { throw new Error(err.message || 'Ошибка'); });
+            }
+            showAlert('Профиль успешно обновлён', 'success');
+            cancelEditing();
+            loadProfile();
+        })
+        .catch(error => {
+            console.error('Ошибка:', error);
+            if (error !== result?.error) {
+                showAlert('Ошибка сохранения: ' + error.message, 'danger');
+            }
+        });
+    }
+
+    function showAlert(message, type) {
+        const container = document.getElementById('alertContainer');
+        container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+        setTimeout(() => container.innerHTML = '', 3000);
+    }
+</script>
+</body>
+</html>
