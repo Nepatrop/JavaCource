@@ -23,22 +23,29 @@ public class SecurityConfig {
         t_http
                 .authorizeHttpRequests(authz -> authz
                         // Публичные endpoints - доступны всем
-                        .requestMatchers("/", "/registration", "/login", "/css/**").permitAll()
+                        .requestMatchers("/", "/login", "/register", "/css/**", "/js/**", "/h2-console/**").permitAll()
 
                         // Swagger UI и API docs - ТОЛЬКО для ADMIN
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").hasRole("ADMIN")
+
+                        // REST API для auth (регистрация) - публичный
+                        .requestMatchers("/api/auth/**").permitAll()
 
                         // REST API требует аутентификации (любой авторизованный пользователь)
                         .requestMatchers("/api/**").authenticated()
 
                         // HTML страницы требуют аутентификации (любой авторизованный пользователь)
-                        .requestMatchers("/employees/**").authenticated()
+                        .requestMatchers("/employees/**", "/departments/**", "/reports/**").authenticated()
 
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
-                        .defaultSuccessUrl("/employees/list")
+                        .loginProcessingUrl("/login")
+                        .usernameParameter("email")  // Вход по email
+                        .passwordParameter("password")
+                        .defaultSuccessUrl("/employees", true)
+                        .failureUrl("/login?error")
                         .permitAll()
                 )
                 .logout(logout -> logout
@@ -47,7 +54,9 @@ public class SecurityConfig {
                         .permitAll()
                 )
                 // Отключаем CSRF для упрощения тестирования REST API
-                .csrf(AbstractHttpConfigurer::disable);
+                .csrf(AbstractHttpConfigurer::disable)
+                // H2 console требует frameOptions
+                .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()));
 
         return t_http.build();
     }
@@ -69,7 +78,7 @@ public class SecurityConfig {
                         .logoutSuccessUrl("/login?logout")
                         .permitAll()
                 )
-                .csrf(AbstractHttpConfigurer::disable); // Важно: отключаем CSRF
+                .csrf(AbstractHttpConfigurer::disable);
 
         return t_http.build();
     }

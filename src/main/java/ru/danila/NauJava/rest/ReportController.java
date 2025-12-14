@@ -9,7 +9,6 @@ import ru.danila.NauJava.service.ReportService;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * REST контроллер для работы с отчетами
@@ -32,22 +31,17 @@ public class ReportController {
     @PostMapping("/generate-report")
     public ResponseEntity<Map<String, Object>> generateReport() {
         try {
-            System.out.println("Получен запрос на создание отчета");
-
             // Создаем отчет
-            Long reportId = reportService.createReport();
-            System.out.println("Создан отчет с ID: " + reportId);
+            Long reportId = reportService.createReport("Отчет сотрудников", 1L);
 
             // Запускаем асинхронное формирование отчета (НЕ ждем завершения)
-            CompletableFuture<Void> future = reportService.generateReportAsync(reportId);
+            reportService.generateEmployeeReportAsync(reportId);
 
             Map<String, Object> response = new HashMap<>();
             response.put("reportId", reportId);
             response.put("status", "created");
             response.put("message", "Формирование отчета запущено");
             response.put("checkUrl", "/api/report/" + reportId);
-
-            System.out.println("Асинхронное формирование отчета " + reportId + " запущено");
 
             return ResponseEntity.ok(response);
 
@@ -70,12 +64,9 @@ public class ReportController {
     @GetMapping("/report/{id}")
     public ResponseEntity<Map<String, Object>> getReport(@PathVariable Long id) {
         try {
-            System.out.println("Запрос отчета с ID: " + id);
-
             Report report = reportService.getReportById(id);
 
             if (report == null) {
-                System.out.println("Отчет с ID " + id + " не найден");
                 Map<String, Object> errorResponse = new HashMap<>();
                 errorResponse.put("error", "Отчет не найден");
                 errorResponse.put("reportId", id);
@@ -96,8 +87,6 @@ public class ReportController {
                 response.put("error", "При формировании отчета произошла ошибка");
                 response.put("content", report.getContent());
             }
-
-            System.out.println("Отчет " + id + " получен, статус: " + report.getStatus());
 
             return ResponseEntity.ok(response);
 
@@ -136,6 +125,75 @@ public class ReportController {
             errorResponse.put("error", "Не удалось получить информацию об отчетах");
             errorResponse.put("message", e.getMessage());
 
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+    }
+
+    /**
+     * GET: Получить список всех отчётов
+     * URL: GET /api/reports
+     */
+    @GetMapping("/reports")
+    public ResponseEntity<?> getAllReports() {
+        try {
+            var reports = reportService.getAllReports().stream()
+                .map(report -> {
+                    Map<String, Object> r = new HashMap<>();
+                    r.put("id", report.getId());
+                    r.put("title", report.getTitle());
+                    r.put("status", report.getStatus().name());
+                    r.put("createdAt", report.getCreatedDate());
+                    r.put("content", report.getContent());
+                    return r;
+                })
+                .toList();
+            return ResponseEntity.ok(reports);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Не удалось получить список отчётов");
+            errorResponse.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+    }
+
+    /**
+     * POST: Создание отчета (альтернативный endpoint)
+     * URL: POST /api/reports
+     */
+    @PostMapping("/reports")
+    public ResponseEntity<Map<String, Object>> createReport(@RequestBody(required = false) Map<String, String> body) {
+        try {
+            String title = body != null && body.containsKey("title") ? body.get("title") : "Отчет сотрудников";
+            Long reportId = reportService.createReport(title, 1L);
+            reportService.generateEmployeeReportAsync(reportId);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("reportId", reportId);
+            response.put("status", "created");
+            response.put("message", "Формирование отчета запущено");
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Не удалось создать отчет");
+            errorResponse.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+    }
+
+    /**
+     * DELETE: Удалить отчёт
+     * URL: DELETE /api/reports/{id}
+     */
+    @DeleteMapping("/reports/{id}")
+    public ResponseEntity<?> deleteReport(@PathVariable Long id) {
+        try {
+            reportService.deleteReport(id);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Не удалось удалить отчёт");
+            errorResponse.put("message", e.getMessage());
             return ResponseEntity.badRequest().body(errorResponse);
         }
     }

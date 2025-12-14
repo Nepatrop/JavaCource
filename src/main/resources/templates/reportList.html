@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Отчёты - NauJava HR System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4a6cf7;
+            --secondary-color: #6c757d;
+            --bg-color: #f8f9fc;
+            --card-bg: #ffffff;
+            --text-color: #333;
+            --text-muted: #6c757d;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --info-color: #17a2b8;
+        }
+        body {
+            background-color: var(--bg-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text-color);
+        }
+        .navbar {
+            background: var(--card-bg);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+            padding: 12px 0;
+        }
+        .navbar-brand {
+            font-weight: 600;
+            font-size: 1.25rem;
+            color: var(--primary-color) !important;
+        }
+        .nav-link {
+            color: var(--text-color) !important;
+            font-weight: 500;
+            margin: 0 8px;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: var(--primary-color) !important;
+        }
+        .page-header {
+            background: var(--card-bg);
+            padding: 24px 0;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+        }
+        .report-card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            margin-bottom: 16px;
+        }
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        .report-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-color);
+            margin: 0;
+        }
+        .report-meta {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .status-CREATED {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .status-IN_PROGRESS {
+            background: #cce5ff;
+            color: #004085;
+        }
+        .status-COMPLETED {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-ERROR {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .report-content {
+            background: var(--bg-color);
+            border-radius: 6px;
+            padding: 16px;
+            margin-top: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 0.85rem;
+        }
+        .report-actions {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #eee;
+        }
+        .btn-primary {
+            background: var(--primary-color);
+            border: none;
+        }
+        .btn-primary:hover {
+            background: #3a5bd9;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+<!-- Навигация -->
+<nav class="navbar">
+    <div class="container">
+        <a class="navbar-brand" href="/">NauJava HR System</a>
+        <ul class="navbar-nav ms-auto" style="display: flex; flex-direction: row; gap: 15px;">
+            <li class="nav-item"><a class="nav-link" href="/employees">Сотрудники</a></li>
+            <li class="nav-item"><a class="nav-link" href="/departments">Отделы</a></li>
+            <li class="nav-item"><a class="nav-link active" href="/reports">Отчёты</a></li>
+            <li class="nav-item"><a class="nav-link" href="/profile">Профиль</a></li>
+            <li class="nav-item"><a class="nav-link" href="/logout">Выход</a></li>
+        </ul>
+    </div>
+</nav>
+
+<!-- Заголовок страницы -->
+<div class="page-header">
+    <div class="container d-flex justify-content-between align-items-center">
+        <h1 class="page-title">Отчёты</h1>
+        <div>
+            <button class="btn btn-primary btn-sm" onclick="createReport()">
+                + Создать отчёт
+            </button>
+            <button class="btn btn-outline-secondary btn-sm ms-2" onclick="loadReports()">
+                Обновить
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Основной контент -->
+<div class="container">
+    <div id="reportsContainer">
+        <div class="text-center py-5">
+            <div class="loading-spinner"></div>
+            <span class="ms-2 text-muted">Загрузка...</span>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function getStatusText(status) {
+        const statusMap = {
+            'CREATED': 'Создан',
+            'IN_PROGRESS': 'Генерация...',
+            'COMPLETED': 'Готов',
+            'ERROR': 'Ошибка'
+        };
+        return statusMap[status] || status;
+    }
+
+    function formatDate(dateString) {
+        if (!dateString) return '—';
+        const date = new Date(dateString);
+        return date.toLocaleString('ru-RU', {
+            day: '2-digit',
+            month: '2-digit', 
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    function loadReports() {
+        const container = document.getElementById('reportsContainer');
+        container.innerHTML = '<div class="text-center py-5"><div class="loading-spinner"></div><span class="ms-2 text-muted">Загрузка...</span></div>';
+        
+        fetch('/api/reports')
+            .then(response => response.json())
+            .then(data => {
+                container.innerHTML = '';
+                
+                if (!data || data.length === 0) {
+                    container.innerHTML = '<div class="empty-state">Нет отчётов. Нажмите "Создать отчёт" для генерации.</div>';
+                    return;
+                }
+                
+                data.forEach(report => {
+                    const card = `
+                        <div class="report-card">
+                            <div class="report-header">
+                                <div>
+                                    <h3 class="report-title">${report.title || 'Отчёт #' + report.id}</h3>
+                                    <div class="report-meta">Создан: ${formatDate(report.createdAt)} • ID: ${report.id}</div>
+                                </div>
+                                <span class="status-badge status-${report.status}">${getStatusText(report.status)}</span>
+                            </div>
+                            ${report.content && report.status === 'COMPLETED' ? `<div class="report-content"><pre style="margin:0; white-space:pre-wrap; font-family: inherit;">${report.content}</pre></div>` : ''}
+                            <div class="report-actions">
+                                <button class="btn btn-outline-danger btn-sm" onclick="deleteReport(${report.id})">
+                                    Удалить
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    container.innerHTML += card;
+                });
+            })
+            .catch(error => {
+                console.error('Ошибка:', error);
+                container.innerHTML = '<div class="text-center text-danger py-5">Ошибка загрузки данных</div>';
+            });
+    }
+
+    function createReport() {
+        const title = prompt('Введите название отчёта:', 'Отчёт по сотрудникам');
+        if (title) {
+            fetch('/api/reports', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title: title })
+            })
+            .then(response => {
+                if (response.ok) {
+                    setTimeout(loadReports, 500);
+                } else {
+                    alert('Ошибка создания отчёта');
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка:', error);
+                alert('Ошибка создания отчёта');
+            });
+        }
+    }
+
+    function deleteReport(id) {
+        if (confirm('Удалить отчёт #' + id + '?')) {
+            fetch('/api/reports/' + id, { method: 'DELETE' })
+                .then(response => {
+                    if (response.ok) {
+                        loadReports();
+                    } else {
+                        alert('Ошибка при удалении');
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка:', error);
+                    alert('Ошибка при удалении');
+                });
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadReports);
+</script>
+</body>
+</html>

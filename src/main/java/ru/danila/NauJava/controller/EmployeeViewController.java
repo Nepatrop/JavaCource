@@ -22,6 +22,14 @@ public class EmployeeViewController {
     }
 
     /**
+     * GET: Страница со списком всех сотрудников (корневой путь /employees)
+     */
+    @GetMapping({"", "/"})
+    public String getAllEmployeesRoot(Model t_model) {
+        return getAllEmployees(t_model);
+    }
+
+    /**
      * GET: Страница со списком всех сотрудников
      */
     @GetMapping("/list")

@@ -2,36 +2,432 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Список сотрудников</title>
+    <title>Сотрудники - NauJava HR System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4a6cf7;
+            --secondary-color: #6c757d;
+            --bg-color: #f8f9fc;
+            --card-bg: #ffffff;
+            --text-color: #333;
+            --text-muted: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+        }
+        body {
+            background-color: var(--bg-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text-color);
+        }
+        .navbar {
+            background: var(--card-bg);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+            padding: 12px 0;
+        }
+        .navbar-brand {
+            font-weight: 600;
+            font-size: 1.25rem;
+            color: var(--primary-color) !important;
+        }
+        .nav-link {
+            color: var(--text-color) !important;
+            font-weight: 500;
+            margin: 0 8px;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: var(--primary-color) !important;
+        }
+        .page-header {
+            background: var(--card-bg);
+            padding: 24px 0;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+        }
+        .content-card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            padding: 24px;
+        }
+        .table {
+            margin-bottom: 0;
+        }
+        .table th {
+            border-top: none;
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .table td {
+            vertical-align: middle;
+            padding: 12px 8px;
+        }
+        .btn-sm {
+            padding: 4px 10px;
+            font-size: 0.8rem;
+        }
+        .btn-primary {
+            background: var(--primary-color);
+            border: none;
+        }
+        .btn-primary:hover {
+            background: #3a5bd9;
+        }
+        .btn-outline-secondary {
+            color: var(--text-muted);
+            border-color: #dee2e6;
+        }
+        .btn-outline-danger {
+            color: var(--danger-color);
+        }
+        .badge-dept {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-weight: 500;
+            font-size: 0.8rem;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .action-buttons {
+            display: flex;
+            flex-direction: row;
+            gap: 4px;
+            white-space: nowrap;
+        }
+        .modal-header {
+            background: var(--primary-color);
+            color: white;
+        }
+        .modal-header .btn-close {
+            filter: invert(1);
+        }
+    </style>
 </head>
 <body>
-<h1>Список сотрудников</h1>
+<!-- Навигация -->
+<nav class="navbar">
+    <div class="container">
+        <a class="navbar-brand" href="/"> NauJava HR System</a>
+        <ul class="navbar-nav ms-auto" style="display: flex; flex-direction: row; gap: 15px;">
+            <li class="nav-item"><a class="nav-link active" href="/employees">Сотрудники</a></li>
+            <li class="nav-item"><a class="nav-link" href="/departments">Отделы</a></li>
+            <li class="nav-item"><a class="nav-link" href="/reports">Отчёты</a></li>
+            <li class="nav-item"><a class="nav-link" href="/profile">Профиль</a></li>
+            <li class="nav-item"><a class="nav-link" href="/logout">Выход</a></li>
+        </ul>
+    </div>
+</nav>
 
-<div>
-    <a href="/employees/list">Все сотрудники</a> |
-    <a href="/swagger-ui/index.html">Swagger</a> |
-    <a href="/actuator">Actuator</a>
+<!-- Заголовок страницы -->
+<div class="page-header">
+    <div class="container d-flex justify-content-between align-items-center">
+        <h1 class="page-title">Сотрудники</h1>
+        <div class="d-flex gap-2 align-items-center">
+            <input type="text" class="form-control form-control-sm" id="searchInput" 
+                   placeholder="Поиск по ФИО..." style="width: 200px;" oninput="filterEmployees()">
+            <button class="btn btn-primary btn-sm" id="addEmployeeBtn" style="display: none;" onclick="openAddModal()">
+                Добавить
+            </button>
+            <button class="btn btn-outline-secondary btn-sm" onclick="loadEmployees()">
+                Обновить
+            </button>
+        </div>
+    </div>
 </div>
 
-<table border="1" style="border-collapse: collapse; margin-top: 20px;">
-    <tr>
-        <th>ID</th>
-        <th>Имя</th>
-        <th>Фамилия</th>
-        <th>Отдел</th>
-        <th>Должность</th>
-    </tr>
-    <tr th:each="employee : ${employees}">
-        <td th:text="${employee.id}">1</td>
-        <td th:text="${employee.firstName}">Иван</td>
-        <td th:text="${employee.lastName}">Петров</td>
-        <td th:text="${employee.department}">IT</td>
-        <td th:text="${employee.position}">Разработчик</td>
-    </tr>
-</table>
-
-<div th:if="${#lists.isEmpty(employees)}" style="margin-top: 20px;">
-    Нет сотрудников для отображения
+<!-- Основной контент -->
+<div class="container">
+    <div class="content-card">
+        <div class="table-responsive">
+            <table class="table" id="employeesTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Имя</th>
+                        <th>Фамилия</th>
+                        <th>Email</th>
+                        <th>Должность</th>
+                        <th>Отдел</th>
+                        <th style="width: 120px;">Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <div class="loading-spinner"></div>
+                            <span class="ms-2 text-muted">Загрузка...</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
+
+<!-- Модальное окно редактирования сотрудника -->
+<div class="modal fade" id="editEmployeeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editModalTitle">Редактирование сотрудника</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editEmployeeId">
+                <div class="mb-3">
+                    <label class="form-label">Имя</label>
+                    <input type="text" class="form-control" id="editFirstName" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Фамилия</label>
+                    <input type="text" class="form-control" id="editLastName" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-control" id="editEmail" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Должность</label>
+                    <input type="text" class="form-control" id="editPosition">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Отдел</label>
+                    <select class="form-select" id="editDepartment">
+                        <option value="">-- Выберите отдел --</option>
+                    </select>
+                </div>
+                <div class="mb-3 form-check" id="adminCheckboxContainer" style="display: none;">
+                    <input type="checkbox" class="form-check-input" id="editIsAdmin">
+                    <label class="form-check-label" for="editIsAdmin">
+                        Администратор (может редактировать сотрудников)
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" onclick="saveEmployee()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    let allEmployees = [];
+    let allDepartments = [];
+    let isAdmin = false;
+    let isEditMode = false;
+    let editModal = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        editModal = new bootstrap.Modal(document.getElementById('editEmployeeModal'));
+        loadDepartments();
+        loadEmployees();
+    });
+
+    function loadDepartments() {
+        fetch('/api/departments')
+            .then(response => response.json())
+            .then(data => {
+                allDepartments = data;
+                const select = document.getElementById('editDepartment');
+                select.innerHTML = '<option value="">-- Выберите отдел --</option>';
+                data.forEach(dept => {
+                    select.innerHTML += `<option value="${dept.id}">${dept.name}</option>`;
+                });
+            })
+            .catch(error => console.error('Ошибка загрузки отделов:', error));
+    }
+
+    function loadEmployees() {
+        const tbody = document.querySelector('#employeesTable tbody');
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4"><div class="loading-spinner"></div><span class="ms-2 text-muted">Загрузка...</span></td></tr>';
+        
+        fetch('/profile/api/current')
+            .then(response => response.json())
+            .then(userData => {
+                isAdmin = userData.isAdmin;
+                return fetch('/api/employees');
+            })
+            .then(response => response.json())
+            .then(data => {
+                allEmployees = data;
+                renderEmployees(data);
+                // Показываем кнопку добавления для админа
+                if (isAdmin) {
+                    document.getElementById('addEmployeeBtn').style.display = 'inline-block';
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка:', error);
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">Ошибка загрузки данных</td></tr>';
+            });
+    }
+
+    function renderEmployees(data) {
+        const tbody = document.querySelector('#employeesTable tbody');
+        tbody.innerHTML = '';
+        
+        if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Нет данных о сотрудниках</td></tr>';
+            return;
+        }
+        
+        data.forEach(emp => {
+            let actionsHtml = '';
+            if (isAdmin) {
+                actionsHtml = `
+                    <div class="action-buttons">
+                        <button class="btn btn-outline-primary btn-sm" onclick="openEditModal(${emp.id})" title="Редактировать">
+                            Ред.
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm" onclick="deleteEmployee(${emp.id})" title="Удалить">
+                            Удал.
+                        </button>
+                    </div>
+                `;
+            } else {
+                actionsHtml = '<span class="text-muted">—</span>';
+            }
+            
+            const row = `<tr>
+                <td><strong>#${emp.id}</strong></td>
+                <td>${emp.firstName || '—'}</td>
+                <td>${emp.lastName || '—'}</td>
+                <td>${emp.email || '—'}</td>
+                <td>${emp.position || '—'}</td>
+                <td><span class="badge-dept">${emp.departmentName || '—'}</span></td>
+                <td>${actionsHtml}</td>
+            </tr>`;
+            tbody.innerHTML += row;
+        });
+    }
+
+    function filterEmployees() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const filtered = allEmployees.filter(emp => {
+            const fullName = `${emp.firstName || ''} ${emp.lastName || ''}`.toLowerCase();
+            return fullName.includes(searchTerm);
+        });
+        renderEmployees(filtered);
+    }
+
+    function openEditModal(id) {
+        isEditMode = true;
+        document.getElementById('editModalTitle').textContent = 'Редактирование сотрудника';
+        const emp = allEmployees.find(e => e.id === id);
+        if (!emp) return;
+        
+        document.getElementById('editEmployeeId').value = emp.id;
+        document.getElementById('editFirstName').value = emp.firstName || '';
+        document.getElementById('editLastName').value = emp.lastName || '';
+        document.getElementById('editEmail').value = emp.email || '';
+        document.getElementById('editPosition').value = emp.position || '';
+        document.getElementById('editDepartment').value = emp.departmentId || '';
+        document.getElementById('editIsAdmin').checked = emp.isAdmin || false;
+        
+        // Показываем галочку админа только для админов
+        if (isAdmin) {
+            document.getElementById('adminCheckboxContainer').style.display = 'block';
+        }
+        
+        editModal.show();
+    }
+
+    function openAddModal() {
+        isEditMode = false;
+        document.getElementById('editModalTitle').textContent = 'Добавление сотрудника';
+        document.getElementById('editEmployeeId').value = '';
+        document.getElementById('editFirstName').value = '';
+        document.getElementById('editLastName').value = '';
+        document.getElementById('editEmail').value = '';
+        document.getElementById('editPosition').value = '';
+        document.getElementById('editDepartment').value = '';
+        document.getElementById('editIsAdmin').checked = false;
+        
+        // Показываем галочку админа только для админов
+        if (isAdmin) {
+            document.getElementById('adminCheckboxContainer').style.display = 'block';
+        }
+        
+        editModal.show();
+    }
+
+    function saveEmployee() {
+        const id = document.getElementById('editEmployeeId').value;
+        const data = {
+            m_firstName: document.getElementById('editFirstName').value,
+            m_lastName: document.getElementById('editLastName').value,
+            m_email: document.getElementById('editEmail').value,
+            m_position: document.getElementById('editPosition').value,
+            m_departmentId: document.getElementById('editDepartment').value || null,
+            m_isAdmin: document.getElementById('editIsAdmin').checked
+        };
+        
+        const url = isEditMode ? '/api/employees/' + id : '/api/employees';
+        const method = isEditMode ? 'PUT' : 'POST';
+        
+        fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            if (response.ok) {
+                editModal.hide();
+                loadEmployees();
+            } else {
+                return response.json().then(err => { throw new Error(err.message || 'Ошибка'); });
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка:', error);
+            alert('Ошибка при сохранении: ' + error.message);
+        });
+    }
+
+    function deleteEmployee(id) {
+        if (confirm('Удалить сотрудника #' + id + '?')) {
+            fetch('/api/employees/' + id, { method: 'DELETE' })
+                .then(response => {
+                    if (response.ok) {
+                        loadEmployees();
+                    } else {
+                        alert('Ошибка при удалении');
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка:', error);
+                    alert('Ошибка при удалении');
+                });
+        }
+    }
+</script>
 </body>
 </html>
